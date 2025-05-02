@@ -7,6 +7,13 @@ import math
 cam_angle = 5
 cam_height = 5.0
 radius = 5.0  
+ball_state = 'ready'  # 'ready', 'moving'
+ball_target = [0, 0, -15]
+ball_pos = [0, 0.2, -5.3]
+score = 0
+
+
+
 
 def draw_ground():
     # ground
@@ -56,7 +63,8 @@ def draw_ground():
    
 def draw_goalkeeper():
     glPushMatrix()
-    glTranslatef(0, 0, -12)  # goalkeeper position
+    glTranslatef(0, 0, -12)  # new
+  # goalkeeper position
 
     
     glColor3f(0.9, 0.1, 0.1) 
@@ -231,9 +239,55 @@ def draw_cube():
 def draw_ball():
     glColor3f(1.0, 1.0, 1.0)
     glPushMatrix()
-    glTranslatef(0, 0.2, -5.3)  # Slightly above ground
+    glTranslatef(ball_pos[0], ball_pos[1], ball_pos[2])
     glutSolidSphere(0.2, 20, 20)
     glPopMatrix()
+def keyboard(key, x, y):
+    global ball_state, ball_target
+    if ball_state != 'ready':
+        return
+
+    key = key.decode('utf-8')
+
+    if key == 'a':  # Bottom left corner
+        ball_target = [-2.99, 0.5, -14.5]
+    elif key == 'd':  # Bottom right corner
+        ball_target = [2.99, 0.5, -14.5]
+    elif key == 'w':  # Top right corner
+        ball_target = [2.99, 3, -14.5]
+    elif key == 's':  # Top left corner
+        ball_target = [-2.99, 3, -14.5]
+    else:
+        return
+
+    ball_state = 'moving'
+    glutIdleFunc(update_ball)
+
+
+def update_ball():
+    global ball_pos, ball_target, ball_state, score
+
+    speed = 0.2
+    for i in range(3):
+        diff = ball_target[i] - ball_pos[i]
+        if abs(diff) > speed:
+            ball_pos[i] += speed if diff > 0 else -speed
+        else:
+            ball_pos[i] = ball_target[i]
+
+    if ball_pos == ball_target:
+        ball_state = 'ready'
+        score += 1
+        print("GOAL! Score:", score)
+        reset_ball()
+        glutIdleFunc(None)  # Stop animation
+
+    glutPostRedisplay()
+def reset_ball():
+    global ball_pos
+    ball_pos = [0, 0.2, -5.3]
+
+
 
 
 def display():
@@ -294,4 +348,7 @@ init()
 glutDisplayFunc(display)
 glutReshapeFunc(reshape)
 glutSpecialFunc(special_keys)
+glutKeyboardFunc(keyboard)
+
+
 glutMainLoop()
